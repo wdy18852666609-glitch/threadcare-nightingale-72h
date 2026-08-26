@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ThreadCare — Local LLM setup</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <main class="setup-shell">
+    <section class="panel setup-card">
+      <p class="eyebrow">LOCAL DEMO SETUP</p>
+      <h1>Connect Google Gemini</h1>
+      <p>This key is sent only to the ThreadCare server running on this computer. It is kept in memory and is not written to the project.</p>
+      <form id="llm-setup-form">
+        <input name="persist" type="hidden" value="true">
+        <label for="google-api-key">Google API key</label>
+        <input id="google-api-key" name="apiKey" type="password" autocomplete="off" required>
+        <label for="google-model">Model</label>
+        <input id="google-model" name="model" value="gemini-2.5-flash" required>
+        <button type="submit">Connect Gemini</button>
+      </form>
+      <p id="setup-status" role="status"></p>
+    </section>
+  </main>
+  <script type="module" src="/setup.js"></script>
+</body>
+</html>

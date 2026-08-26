@@ -1,0 +1,15 @@
+{
+  "name": "nightingale-care-note",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "A trust-first longitudinal care note prototype for the Nightingale 72-hour build.",
+  "scripts": {
+    "start": "node server.js --demo",
+    "test": "python -m unittest discover -s tests -p \"test_*.py\" -v",
+    "benchmark:p95": "node scripts/benchmark-p95.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ThreadCare — Longitudinal Care Note</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark">TC</div>
+          <div><strong>ThreadCare</strong><span>Trust-first care notes</span></div>
+        </div>
+
+        <nav>
+          <button class="nav-item active" data-nav="care"><span>⌁</span> Shared Care Note</button>
+          <button class="nav-item" data-nav="patients"><span>◎</span> Patients</button>
+          <button class="nav-item" data-nav="tasks"><span>✓</span> Tasks</button>
+          <button class="nav-item" data-nav="messages"><span>✉</span> Messages</button>
+          <button class="nav-item" data-nav="audit"><span>↺</span> Audit</button>
+        </nav>
+
+        <div class="demo-box">
+          <span class="eyebrow">DEMO ROLE</span>
+          <select id="roleSelect" aria-label="Demo role">
+            <option value="patient" selected>Patient · Mr Chen</option>
+            <option value="clinician">Clinician · Dr Lee</option>
+            <option value="staff">Staff · Maya</option>
+            <option value="admin">Admin · Clinic Ops</option>
+          </select>
+          <p>Identity is simulated. Every permission is rechecked by the server.</p>
+        </div>
+      </aside>
+
+      <main>
+        <header class="topbar">
+          <div>
+            <span class="breadcrumb">Patients / P-1001</span>
+            <h1 id="patientName">Mr Chen <small>(synthetic)</small></h1>
+            <p id="patientMeta" class="patient-meta">68 years · he/him · Last visit 25 Aug 2026</p>
+          </div>
+          <div class="header-actions">
+            <span class="synthetic-badge">SYNTHETIC DATA</span>
+            <button class="button secondary" id="resetButton">Reset demo</button>
+          </div>
+        </header>
+
+        <section id="notice" class="notice hidden"></section>
+        <section id="adminView" class="hidden"></section>
+
+        <section id="patientPortal" class="role-page hidden">
+          <div class="portal-hero">
+            <span class="eyebrow">BEFORE YOUR CONSULT</span>
+            <h2>Start your AI-assisted pre-consult</h2>
+            <p>Describe what you are feeling. AI will organise the report and ask a follow-up question; it does not diagnose you.</p>
+            <form id="patientSessionForm">
+              <textarea name="message" placeholder="Describe your symptoms or concern in your own words…" required></textarea>
+              <div class="portal-actions"><span>🔒 Synthetic demo · names, IDs and phone numbers are redacted before AI summarisation.</span><button class="button">Share with care team</button></div>
+            </form>
+          </div>
+          <div class="communication-grid patient-communications">
+            <section class="chat-panel"><div class="chat-heading"><div><span class="eyebrow">AI INTAKE</span><h2>Pre-consult conversation</h2></div></div><div id="patientAiChat" class="message-list"></div></section>
+            <section class="chat-panel"><div class="chat-heading"><div><span class="eyebrow">CARE TEAM</span><h2>Message Dr Lee</h2></div></div><div id="patientClinicianChat" class="message-list"></div><form class="chat-form" data-conversation-form="C-PATIENT-CLINICIAN"><input name="body" placeholder="Reply to your clinician…" required><button class="button">Send</button></form></section>
+            <section class="chat-panel"><div class="chat-heading"><div><span class="eyebrow">CARE TEAM</span><h2>Message Nurse Maya</h2></div></div><div id="patientStaffChat" class="message-list"></div><form class="chat-form" data-conversation-form="C-PATIENT-STAFF"><input name="body" placeholder="Message your nurse…" required><button class="button">Send</button></form></section>
+          </div>
+          <section id="patientReminders" class="treatment-panel"></section>
+          <section id="patientTreatment" class="treatment-panel"></section>
+        </section>
+
+        <section id="patientListView" class="role-page hidden">
+          <div class="section-heading"><div><span class="eyebrow">CLINICIAN WORKSPACE</span><h2>Patients needing attention</h2></div></div>
+          <div id="patientList" class="patient-list"></div>
+        </section>
+
+        <section id="staffTaskView" class="role-page hidden">
+          <div class="section-heading"><div><span class="eyebrow">STAFF WORKSPACE</span><h2>Assigned clinical tasks</h2></div><button class="button secondary" data-open-manual-note>Add staff note</button></div>
+          <div id="staffGlance"></div>
+          <div id="staffTasks" class="staff-tasks"></div>
+          <section class="chat-panel team-chat-panel"><div class="chat-heading"><div><span class="eyebrow">INTERNAL</span><h2>Dr Lee ↔ Maya</h2></div><button class="button small secondary" data-summarize-conversation="C-CLINICAL-TEAM">Summarize to timeline</button></div><div id="staffTeamChat" class="message-list"></div><form class="chat-form" data-conversation-form="C-CLINICAL-TEAM"><input name="body" placeholder="Reply to Dr Lee…" required><button class="button">Send</button></form></section>
+          <section class="chat-panel team-chat-panel"><div class="chat-heading"><div><span class="eyebrow">PATIENT CONSULT</span><h2>Nurse Maya ↔ Mr Chen</h2></div><button class="button small secondary" data-summarize-conversation="C-PATIENT-STAFF">Create nurse AI summary</button></div><div id="staffPatientChat" class="message-list"></div><form class="chat-form" data-conversation-form="C-PATIENT-STAFF"><input name="body" placeholder="Message Mr Chen…" required><button class="button">Send</button></form></section>
+        </section>
+
+        <div id="careView">
+          <section class="section-block">
+            <div class="section-heading">
+              <div><span class="eyebrow">CONSULT GLANCE</span><h2>What needs attention now</h2></div>
+              <div class="header-actions"><span class="warm-path">● warm path · <strong id="loadTime">—</strong></span><button class="button secondary" id="addNoteButton">Add note</button><button class="button" id="closeConsultationButton">End consultation</button></div>
+            </div>
+            <div id="topCards" class="top-cards"></div>
+          </section>
+
+          <section class="section-block timeline-section">
+            <div class="section-heading">
+              <div><span class="eyebrow">SOURCE OF TRUTH</span><h2>Longitudinal timeline</h2></div>
+              <div class="filters"><button class="chip active">All</button><button class="chip">AI scribe</button><button class="chip">Clinical</button></div>
+            </div>
+            <div id="timeline" class="timeline"></div>
+          </section>
+
+          <section class="section-block communication-section">
+            <div class="section-heading"><div><span class="eyebrow">COMMUNICATION</span><h2>Care conversations</h2></div></div>
+            <div class="communication-grid">
+              <section class="chat-panel" id="clinicianPatientPanel"><div class="chat-heading"><div><span class="eyebrow">PATIENT</span><h2>Dr Lee ↔ Mr Chen</h2></div><button class="button small secondary" data-summarize-conversation="C-PATIENT-CLINICIAN">Summarize to timeline</button></div><div id="clinicianPatientChat" class="message-list"></div><form class="chat-form" data-conversation-form="C-PATIENT-CLINICIAN"><input name="body" placeholder="Message Mr Chen…" required><button class="button">Send</button></form></section>
+              <section class="chat-panel"><div class="chat-heading"><div><span class="eyebrow">CLINICAL TEAM</span><h2>Dr Lee ↔ Maya</h2></div><button class="button small secondary" data-summarize-conversation="C-CLINICAL-TEAM">Summarize to timeline</button></div><div id="clinicianTeamChat" class="message-list"></div><form class="chat-form team-task-form" data-conversation-form="C-CLINICAL-TEAM"><input name="body" placeholder="Message Maya…" required><input name="taskTitle" placeholder="Optional: publish as task"><button class="button">Send</button></form></section>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <div class="drawer-backdrop hidden" id="drawerBackdrop"></div>
+    <aside class="drawer" id="sourceDrawer" aria-hidden="true">
+      <div class="drawer-header">
+        <div><span class="eyebrow">DETAIL</span><h2 id="drawerTitle">Entry details</h2></div>
+        <button class="icon-button" id="closeDrawer" aria-label="Close">×</button>
+      </div>
+      <div id="drawerContent"></div>
+    </aside>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>
