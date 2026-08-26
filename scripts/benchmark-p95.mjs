@@ -1,11 +1,14 @@
 const baseUrl = (process.env.BENCHMARK_BASE_URL || "http://localhost:3000").replace(/\/$/, "");
 const warmups = Number(process.env.BENCHMARK_WARMUPS || 20);
 const sampleCount = Number(process.env.BENCHMARK_SAMPLES || 200);
-const headers = {
-  "x-role": "clinician",
-  "x-user-id": "benchmark-clinician",
-  "x-clinic-id": "clinic-sg-01"
-};
+const loginResponse = await fetch(`${baseUrl}/api/auth/login`, {
+  method: "POST",
+  headers: { "content-type": "application/json" },
+  body: JSON.stringify({ role: "clinician", password: process.env.CLINICIAN_PASSWORD || "clinician123" })
+});
+if (!loginResponse.ok) throw new Error(`Benchmark login returned HTTP ${loginResponse.status}`);
+const cookie = loginResponse.headers.get("set-cookie")?.split(";", 1)[0];
+const headers = { cookie };
 
 async function loadConsultGlance() {
   const startedAt = performance.now();
@@ -28,7 +31,7 @@ const result = {
   measuredAt: new Date().toISOString(),
   target: "warm consult glance API path",
   method: "Sequential GET patient care-note data plus visible conversations, matching the browser load path",
-  environment: "localhost; synthetic in-memory demo state",
+  environment: "localhost; synthetic server-persisted demo state; authenticated session",
   warmups,
   samples: sampleCount,
   medianMs: Number(percentile(0.5).toFixed(2)),

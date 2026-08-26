@@ -136,6 +136,7 @@ class ApiTestCase(unittest.TestCase):
             "OPENAI_API_KEY": "test-key",
             "OPENAI_MODEL": "test-external-llm",
             "OPENAI_BASE_URL": f"http://127.0.0.1:{cls.llm_port}/v1",
+            "TEST_AUTH_BYPASS": "true",
         })
         cls.process = subprocess.Popen(
             [node, "server.js", "--demo", f"--port={cls.port}"],

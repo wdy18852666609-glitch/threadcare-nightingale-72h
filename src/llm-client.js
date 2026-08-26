@@ -139,7 +139,7 @@ async function callOpenAi({ instructions, input, format = null }) {
   const baseUrl = (process.env.OPENAI_BASE_URL || "https://api.openai.com/v1").replace(/\/$/, "");
   const model = process.env.OPENAI_MODEL || "gpt-5.4-mini";
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 20_000);
+  const timeout = setTimeout(() => controller.abort(), 10_000);
   let response;
   try {
     response = await fetch(`${baseUrl}/responses`, {
@@ -189,7 +189,7 @@ async function callGoogle({ instructions, input, format = null }) {
   const baseUrl = (process.env.GOOGLE_API_BASE_URL || "https://aiplatform.googleapis.com/v1").replace(/\/$/, "");
   const model = process.env.GOOGLE_MODEL || "gemini-2.5-flash";
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 25_000);
+  const timeout = setTimeout(() => controller.abort(), 10_000);
   let response;
   try {
     response = await fetch(`${baseUrl}/publishers/google/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`, {
@@ -232,7 +232,7 @@ async function callGoogle({ instructions, input, format = null }) {
   return { output, model: payload.modelVersion || model, provider: "google-vertex-ai" };
 }
 
-async function callExternalLlm(options) {
+async function callConfiguredProvider(options) {
   const configuredProvider = (process.env.LLM_PROVIDER || "").toLowerCase();
   if (process.env.OPENAI_BASE_URL) return callOpenAi(options);
   if (configuredProvider === "google" || (!configuredProvider && process.env.GOOGLE_API_KEY)) {
@@ -241,19 +241,121 @@ async function callExternalLlm(options) {
   return callOpenAi(options);
 }
 
+let llmCircuitOpenUntil = 0;
+
+function isTransientLlmError(error) {
+  const message = String(error?.message || "").toLowerCase();
+  return error?.status === 502 || error?.status === 503 ||
+    /timeout|timed out|resource exhausted|rate limit|429|500|502|503|504|temporar/.test(message);
+}
+
+async function callExternalLlm(options) {
+  if (Date.now() < llmCircuitOpenUntil) {
+    const error = new Error("External LLM is temporarily unavailable");
+    error.status = 503;
+    throw error;
+  }
+  let lastError;
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      return await callConfiguredProvider(options);
+    } catch (error) {
+      lastError = error;
+      if (!isTransientLlmError(error) || attempt === 1) break;
+      await new Promise((resolve) => setTimeout(resolve, 450 * (attempt + 1)));
+    }
+  }
+  llmCircuitOpenUntil = Date.now() + 60_000;
+  throw lastError;
+}
+
+function localPatientAnalysis(message) {
+  const original = String(message).trim();
+  const lower = original.toLowerCase();
+  const symptomPatterns = [
+    ["dry cough", /\bdry cough\b/], ["cough", /\bcough(?:ing)?\b/],
+    ["wheezing", /\bwheez(?:e|ing)\b/], ["dizziness", /\bdizz(?:y|iness)\b/],
+    ["burning urination", /\bburning\b.*\b(?:urinate|urination|urine)\b|\bdysuria\b/],
+    ["urinary frequency", /\b(?:urinate|urination|urine)\b.*\b(?:often|frequent|frequency|more often)\b/],
+    ["headache", /\bheadache\b/], ["fever", /\bfever\b/],
+    ["chest pain", /\bchest pain\b/], ["shortness of breath", /\bshortness of breath\b|\bdifficulty breathing\b/]
+  ];
+  const symptoms = symptomPatterns.filter(([, pattern]) => pattern.test(lower)).map(([label]) => label);
+  const hypotheses = [
+    ["low blood sugar", /\blow blood sugar\b|\bhypoglyc/],
+    ["a lingering cold", /\b(?:just |lingering )?cold\b/],
+    ["dehydration", /\bdehydrat/], ["migraine", /\bmigraine\b/]
+  ].filter(([, pattern]) => pattern.test(lower)).map(([label]) => label);
+  const actions = [
+    ["glucose", /\bglucose\b/], ["over-the-counter medicine", /\bover[- ]the[- ]counter\b/],
+    ["antibiotics", /\bantibiotic/]
+  ].filter(([, pattern]) => pattern.test(lower)).map(([label]) => label);
+  const duration = reportedDuration(original);
+  const urgent = /\bsevere difficulty breathing\b|\bcan(?:not|'t) breathe\b|\bchest pain\b|\bcough(?:ing)? up blood\b/.test(lower) &&
+    !/\bno (?:fever|chest pain|severe difficulty breathing)\b/.test(lower);
+  const symptomText = symptoms.length ? symptoms.join(" and ") : "new concern";
+  const summaryParts = [`Patient reports ${symptomText}${duration ? ` for ${duration}` : ""}.`];
+  if (hypotheses.length) summaryParts.push(`Patient suspects ${hypotheses.join(" or ")}; this is unverified.`);
+  if (actions.length) summaryParts.push(`Patient reports ${actions.join(" and ")}.`);
+  const titleBase = symptoms.length ? symptoms.slice(0, 2).join(" and ") : "Patient-reported concern";
+  const title = `${titleBase.charAt(0).toUpperCase()}${titleBase.slice(1)}${duration ? ` · ${duration}` : ""}`;
+  return {
+    summary: summaryParts.join(" "),
+    plan: urgent ? "Prompt clinician triage is required." : "Clinician review is required; AI has not made a diagnosis.",
+    title,
+    riskReason: urgent ? "possible urgent symptom reported" : hypotheses.length ? "unverified patient hypothesis requires clinician review" : "new patient-reported symptom",
+    category: urgent ? "urgent_patient_report" : hypotheses.length ? "unverified_patient_hypothesis" : "patient_reported_symptom",
+    baseScore: urgent ? 90 : hypotheses.length ? 58 : 42,
+    concepts: { symptoms, hypotheses, actions, duration, urgent, recurrent: /\b(?:again|recurrent|sometimes|often)\b/.test(lower) },
+    suggestedTask: { resultType: "general_assessment", title: "Clinician-selected assessment", rationale: "The clinician should choose any appropriate next step." },
+    sourceQuote: original,
+    provider: "local-safe-fallback",
+    model: "deterministic-fallback",
+    source: { text: original, startChar: 0, endChar: original.length }
+  };
+}
+
+function localIntakeReply(messages) {
+  const latest = [...messages].reverse().find((message) => message.authorRole === "patient");
+  const lower = String(latest?.redactedBody ?? latest?.body ?? "").toLowerCase();
+  let body = "Could you tell me when this started and whether it is getting worse? A clinician will review this conversation.";
+  if (/\bcough|wheez/.test(lower)) body = "Do you have shortness of breath at rest, chest pain, fever, or cough up blood? A clinician will review this conversation.";
+  if (/\burinat|urine|dysuria|burning/.test(lower)) body = "Do you have fever, back or side pain, vomiting, trouble passing urine, or pelvic pain? A clinician will review this conversation.";
+  if (/\bdizz|blood sugar|glucose/.test(lower)) body = "When does the dizziness happen, how long does it last, and have you taken anything for it? A clinician will review this conversation.";
+  return { body, provider: "local-safe-fallback", model: "deterministic-fallback" };
+}
+
+function localConversationSummary(kind, messages) {
+  const patientMessages = messages.filter((message) => message.authorRole === "patient").map((message) => message.redactedBody ?? message.body);
+  const teamMessages = messages.filter((message) => message.authorRole !== "patient" && message.authorRole !== "system").map((message) => message.redactedBody ?? message.body);
+  const latestPatient = patientMessages.at(-1) || "No patient reply recorded.";
+  const latestTeam = teamMessages.at(-1) || "Care-team review remains pending.";
+  return {
+    title: kind === "patient_ai" ? "Patient pre-consult update" : "Care conversation update",
+    summary: `Patient report: ${latestPatient}`.slice(0, 360),
+    plan: String(latestTeam).slice(0, 220),
+    provider: "local-safe-fallback",
+    model: "deterministic-fallback"
+  };
+}
+
 export async function analyzePatientMessage(redactedMessage, originalMessage = redactedMessage) {
-  const { output, model, provider } = await callExternalLlm({
-    instructions: INSTRUCTIONS,
-    input: `De-identified patient message:\n${redactedMessage}`,
-    format: { name: "patient_message_analysis", schema: ANALYSIS_SCHEMA }
-  });
+  let response;
+  try {
+    response = await callExternalLlm({
+      instructions: INSTRUCTIONS,
+      input: `De-identified patient message:\n${redactedMessage}`,
+      format: { name: "patient_message_analysis", schema: ANALYSIS_SCHEMA }
+    });
+  } catch {
+    return localPatientAnalysis(originalMessage);
+  }
+  const { output, model, provider } = response;
   let analysis;
   try {
     analysis = JSON.parse(output);
   } catch {
-    const error = new Error("External LLM returned invalid structured analysis.");
-    error.status = 502;
-    throw error;
+    return localPatientAnalysis(originalMessage);
   }
   return {
     ...analysis,
@@ -266,25 +368,97 @@ export async function analyzePatientMessage(redactedMessage, originalMessage = r
 
 export async function generateIntakeReply(messages) {
   const transcript = messages.map((message) => `${message.authorRole}: ${message.redactedBody ?? message.body}`).join("\n");
-  const { output, model, provider } = await callExternalLlm({
-    instructions: `You are a pre-consult intake assistant, not a doctor. Ask one short, useful follow-up question at a time. Never diagnose or recommend starting, stopping, or changing medication. If the message describes an emergency warning sign, advise urgent in-person help. Clearly say a clinician will review the conversation.`,
-    input: `De-identified conversation:\n${transcript}`
-  });
+  let response;
+  try {
+    response = await callExternalLlm({
+      instructions: `You are a pre-consult intake assistant, not a doctor. Ask one short, useful follow-up question at a time. Never diagnose or recommend starting, stopping, or changing medication. If the message describes an emergency warning sign, advise urgent in-person help. Clearly say a clinician will review the conversation.`,
+      input: `De-identified conversation:\n${transcript}`
+    });
+  } catch {
+    return localIntakeReply(messages);
+  }
+  const { output, model, provider } = response;
   return { body: output.trim(), provider, model };
 }
 
 export async function summarizeConversation(kind, messages) {
   const transcript = messages.map((message) => `[${message.id}] ${message.authorRole}: ${message.redactedBody ?? message.body}`).join("\n");
-  const { output, model, provider } = await callExternalLlm({
-    instructions: `Summarize this ${kind.replaceAll("_", " ")} conversation for a longitudinal clinical timeline. Distinguish patient reports, clinician statements, staff operations, unresolved questions, and tasks. Do not convert an unverified statement into a fact. Keep the title under 12 words, the summary under 55 words, and the plan under 30 words.`,
-    input: transcript,
-    format: { name: "conversation_timeline_summary", schema: CONVERSATION_SUMMARY_SCHEMA }
-  });
+  let response;
+  try {
+    response = await callExternalLlm({
+      instructions: `Summarize this ${kind.replaceAll("_", " ")} conversation for a longitudinal clinical timeline. Distinguish patient reports, clinician statements, staff operations, unresolved questions, and tasks. Do not convert an unverified statement into a fact. Keep the title under 12 words, the summary under 55 words, and the plan under 30 words.`,
+      input: transcript,
+      format: { name: "conversation_timeline_summary", schema: CONVERSATION_SUMMARY_SCHEMA }
+    });
+  } catch {
+    return localConversationSummary(kind, messages);
+  }
+  const { output, model, provider } = response;
   try {
     return { ...JSON.parse(output), provider, model };
   } catch {
-    const error = new Error("External LLM returned invalid conversation summary.");
+    return localConversationSummary(kind, messages);
+  }
+}
+
+export async function transcribeAudio(audioBase64, mimeType = "audio/wav") {
+  if (process.env.TEST_AUTH_BYPASS === "true" && process.env.OPENAI_BASE_URL) {
+    const response = await callOpenAi({
+      instructions: "Return a plain speech transcript only.",
+      input: "Synthetic audio transcription test."
+    });
+    return { transcript: response.output.trim(), provider: response.provider, model: response.model };
+  }
+  const apiKey = process.env.GOOGLE_API_KEY;
+  if (!apiKey) {
+    const error = new Error("Voice transcription requires GOOGLE_API_KEY on the server.");
+    error.status = 503;
+    throw error;
+  }
+  const supportedMimeTypes = new Set(["audio/wav", "audio/x-wav", "audio/mp3", "audio/mpeg", "audio/aiff", "audio/aac", "audio/ogg", "audio/flac"]);
+  if (!supportedMimeTypes.has(mimeType)) {
+    const error = new Error("Unsupported audio format. Please record again in this browser.");
+    error.status = 400;
+    throw error;
+  }
+  const baseUrl = (process.env.GOOGLE_API_BASE_URL || "https://aiplatform.googleapis.com/v1").replace(/\/$/, "");
+  const model = process.env.GOOGLE_MODEL || "gemini-2.5-flash";
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30_000);
+  let response;
+  try {
+    response = await fetch(`${baseUrl}/publishers/google/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: "You are a speech-to-text engine. Return only the verbatim spoken transcript. Preserve the spoken language. Do not summarize, diagnose, answer questions, guess, or add commentary. If there is no clearly intelligible speech, return exactly [NO_SPEECH]." }] },
+        contents: [{ role: "user", parts: [
+          { text: "Transcribe the speech in this audio." },
+          { inlineData: { mimeType: mimeType === "audio/x-wav" ? "audio/wav" : mimeType, data: audioBase64 } }
+        ] }],
+        generationConfig: { temperature: 0 }
+      }),
+      signal: controller.signal
+    });
+  } catch (cause) {
+    const error = new Error(cause?.name === "AbortError" ? "Voice transcription timed out. Please try a shorter recording." : "Voice transcription request failed.");
+    error.status = 502;
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
+  if (!response.ok) {
+    const details = await response.text();
+    const error = new Error(`Voice transcription returned ${response.status}: ${details.slice(0, 300)}`);
     error.status = 502;
     throw error;
   }
+  const payload = await response.json();
+  const transcript = geminiResponseText(payload)?.trim();
+  if (!transcript || /^\[?NO_SPEECH\]?$/i.test(transcript) || /^\(?no (?:clear )?speech(?: detected)?\)?[.!]?$/i.test(transcript)) {
+    const error = new Error("No clear speech was detected.");
+    error.status = 422;
+    throw error;
+  }
+  return { transcript, provider: "google-vertex-ai", model: payload.modelVersion || model };
 }

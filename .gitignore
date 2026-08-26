@@ -5,3 +5,6 @@ tmp/
 output/
 .env
 .env.local
+data/demo-state.json
+data/demo-state.json.tmp
+data/demo-state.pre-final-seed-*.json

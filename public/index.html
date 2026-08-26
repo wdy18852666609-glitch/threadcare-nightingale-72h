@@ -7,7 +7,62 @@
     <link rel="stylesheet" href="/style.css" />
   </head>
   <body>
-    <div class="app-shell">
+    <section id="loginView" class="login-shell">
+      <div class="login-intro">
+        <div class="brand login-brand"><div class="brand-mark">TC</div><div><strong>ThreadCare</strong><span>One shared story. The right view for every role.</span></div></div>
+        <span class="eyebrow">SYNTHETIC CARE COLLABORATION</span>
+        <h1>Continue as your care role</h1>
+        <p>Each browser keeps its own secure role session. Clinicians, staff and patients can now work together from separate computers.</p>
+        <div class="login-safety"><strong>Demo safety boundary</strong><span>Use synthetic names and health information only. This is a prototype, not a clinical system.</span></div>
+      </div>
+      <div class="login-card">
+        <div class="role-tabs" role="tablist" aria-label="Choose a role">
+          <button class="role-tab active" data-login-role="clinician">Clinician</button>
+          <button class="role-tab" data-login-role="staff">Staff</button>
+          <button class="role-tab" data-login-role="admin">Admin</button>
+          <button class="role-tab" data-login-role="patient">Patient</button>
+        </div>
+        <div id="teamLoginPanel">
+          <span class="eyebrow" id="teamLoginEyebrow">CLINICIAN ACCESS</span>
+          <h2 id="teamLoginTitle">Welcome back, Dr Lee</h2>
+          <p class="login-help">Enter this role's password. The server—not the browser—will verify your access.</p>
+          <form id="teamLoginForm" class="login-form">
+            <input type="hidden" name="role" value="clinician">
+            <label>Username<input name="username" value="dr.lee" autocomplete="username" required></label>
+            <label>Password<input type="password" name="password" autocomplete="current-password" required></label>
+            <button class="button login-submit">Sign in as clinician</button>
+          </form>
+          <p class="demo-credentials">Demo account: <code id="demoCredentials">dr.lee / clinician123</code></p>
+        </div>
+        <div id="patientRegistrationPanel" class="hidden">
+          <span class="eyebrow">RETURNING PATIENT</span>
+          <h2>Continue an existing care record</h2>
+          <p class="login-help">Use the Patient ID shown when the synthetic record was created.</p>
+          <form id="returningPatientForm" class="login-form returning-patient-form">
+            <label>Patient ID<input name="patientId" placeholder="e.g. P-1001" autocomplete="off" required></label>
+            <label>Age<input name="age" type="number" min="1" max="120" required></label>
+            <button class="button login-submit">Enter patient portal</button>
+          </form>
+          <div class="login-divider"><span>or register a new synthetic patient</span></div>
+          <span class="eyebrow">NEW PATIENT REGISTRATION</span>
+          <h2>Tell the care team who you are</h2>
+          <p class="login-help">A new Patient ID will be created for this synthetic record.</p>
+          <form id="patientRegistrationForm" class="login-form patient-registration-form">
+            <label>Title<select name="title"><option>Mr</option><option>Ms</option><option>Mx</option><option>Dr</option></select></label>
+            <label>First name<input name="givenName" placeholder="Synthetic first name" autocomplete="off" required></label>
+            <label>Family name<input name="familyName" placeholder="Synthetic family name" autocomplete="off" required></label>
+            <label>Age<input name="age" type="number" min="1" max="120" required></label>
+            <label>Pronouns<select name="pronouns"><option>he/him</option><option>she/her</option><option>they/them</option><option>prefer not to say</option></select></label>
+            <label>Phone (optional)<input name="phone" placeholder="Synthetic contact only" autocomplete="off"></label>
+            <label class="synthetic-consent"><input type="checkbox" name="syntheticConfirmed" required><span>I confirm all information is synthetic demo data.</span></label>
+            <button class="button login-submit">Register & enter patient portal</button>
+          </form>
+        </div>
+        <p id="loginError" class="login-error hidden"></p>
+      </div>
+    </section>
+
+    <div id="appShell" class="app-shell hidden">
       <aside class="sidebar">
         <div class="brand">
           <div class="brand-mark">TC</div>
@@ -22,15 +77,11 @@
           <button class="nav-item" data-nav="audit"><span>↺</span> Audit</button>
         </nav>
 
-        <div class="demo-box">
-          <span class="eyebrow">DEMO ROLE</span>
-          <select id="roleSelect" aria-label="Demo role">
-            <option value="patient" selected>Patient · Mr Chen</option>
-            <option value="clinician">Clinician · Dr Lee</option>
-            <option value="staff">Staff · Maya</option>
-            <option value="admin">Admin · Clinic Ops</option>
-          </select>
-          <p>Identity is simulated. Every permission is rechecked by the server.</p>
+        <div class="demo-box account-box">
+          <span class="eyebrow">SIGNED IN</span>
+          <strong id="accountName">—</strong>
+          <p id="accountRole">Secure server session</p>
+          <button class="button secondary" id="logoutButton">Sign out</button>
         </div>
       </aside>
 
@@ -43,7 +94,7 @@
           </div>
           <div class="header-actions">
             <span class="synthetic-badge">SYNTHETIC DATA</span>
-            <button class="button secondary" id="resetButton">Reset demo</button>
+            <button class="button secondary hidden" id="resetButton">Reset demo</button>
           </div>
         </header>
 
@@ -53,57 +104,65 @@
         <section id="patientPortal" class="role-page hidden">
           <div class="portal-hero">
             <span class="eyebrow">BEFORE YOUR CONSULT</span>
-            <h2>Start your AI-assisted pre-consult</h2>
-            <p>Describe what you are feeling. AI will organise the report and ask a follow-up question; it does not diagnose you.</p>
+            <h2 id="patientConsultTitle">Start your AI-assisted pre-consult</h2>
+            <p id="patientConsultDescription">Describe what you are feeling. AI will organise the report and ask a follow-up question; it does not diagnose you.</p>
             <form id="patientSessionForm">
               <textarea name="message" placeholder="Describe your symptoms or concern in your own words…" required></textarea>
-              <div class="portal-actions"><span>🔒 Synthetic demo · names, IDs and phone numbers are redacted before AI summarisation.</span><button class="button">Share with care team</button></div>
+              <div class="portal-actions"><span class="synthetic-warning">🔒 SYNTHETIC DATA ONLY · names, IDs and phone numbers are redacted before AI summarisation.</span><button class="button">Share with care team</button></div>
             </form>
           </div>
           <div class="communication-grid patient-communications">
             <section class="chat-panel"><div class="chat-heading"><div><span class="eyebrow">AI INTAKE</span><h2>Pre-consult conversation</h2></div></div><div id="patientAiChat" class="message-list"></div></section>
-            <section class="chat-panel"><div class="chat-heading"><div><span class="eyebrow">CARE TEAM</span><h2>Message Dr Lee</h2></div></div><div id="patientClinicianChat" class="message-list"></div><form class="chat-form" data-conversation-form="C-PATIENT-CLINICIAN"><input name="body" placeholder="Reply to your clinician…" required><button class="button">Send</button></form></section>
-            <section class="chat-panel"><div class="chat-heading"><div><span class="eyebrow">CARE TEAM</span><h2>Message Nurse Maya</h2></div></div><div id="patientStaffChat" class="message-list"></div><form class="chat-form" data-conversation-form="C-PATIENT-STAFF"><input name="body" placeholder="Message your nurse…" required><button class="button">Send</button></form></section>
+            <section class="chat-panel"><div class="chat-heading"><div><span class="eyebrow">CARE TEAM</span><h2>Message Dr Lee</h2></div></div><div id="patientClinicianChat" class="message-list"></div><form class="chat-form" data-conversation-form="C-PATIENT-CLINICIAN" autocomplete="off"><input name="body" aria-label="Message Dr Lee" autocomplete="off" required><button class="button">Send</button></form></section>
+            <section class="chat-panel"><div class="chat-heading"><div><span class="eyebrow">CARE TEAM</span><h2>Message nursing team</h2></div></div><div id="patientStaffChat" class="message-list"></div><form class="chat-form" data-conversation-form="C-PATIENT-STAFF" autocomplete="off"><input name="body" aria-label="Message nursing team" autocomplete="off" required><button class="button">Send</button></form></section>
           </div>
-          <section id="patientReminders" class="treatment-panel"></section>
           <section id="patientTreatment" class="treatment-panel"></section>
+          <section id="patientReminders" class="treatment-panel"></section>
         </section>
 
         <section id="patientListView" class="role-page hidden">
-          <div class="section-heading"><div><span class="eyebrow">CLINICIAN WORKSPACE</span><h2>Patients needing attention</h2></div></div>
+          <div class="section-heading"><div><span class="eyebrow">CARE TEAM WORKSPACE</span><h2>Patients needing attention</h2></div></div>
           <div id="patientList" class="patient-list"></div>
         </section>
 
         <section id="staffTaskView" class="role-page hidden">
-          <div class="section-heading"><div><span class="eyebrow">STAFF WORKSPACE</span><h2>Assigned clinical tasks</h2></div><button class="button secondary" data-open-manual-note>Add staff note</button></div>
-          <div id="staffGlance"></div>
+          <section class="staff-care-section">
+            <div class="section-heading"><div><h2>What needs attention now</h2></div></div>
+            <div id="staffTopCards" class="top-cards"></div>
+          </section>
+          <section class="staff-care-section timeline-section">
+            <div class="section-heading"><div><h2>Longitudinal timeline</h2></div><div class="filters"><button class="chip active">All</button><button class="chip">AI scribe</button><button class="chip">Clinical</button></div></div>
+            <div id="staffTimeline" class="timeline"></div>
+          </section>
+          <div class="section-heading staff-task-heading"><div><span class="eyebrow">OPEN ACTIONS</span><h2>Assigned clinical tasks</h2></div></div>
           <div id="staffTasks" class="staff-tasks"></div>
-          <section class="chat-panel team-chat-panel"><div class="chat-heading"><div><span class="eyebrow">INTERNAL</span><h2>Dr Lee ↔ Maya</h2></div><button class="button small secondary" data-summarize-conversation="C-CLINICAL-TEAM">Summarize to timeline</button></div><div id="staffTeamChat" class="message-list"></div><form class="chat-form" data-conversation-form="C-CLINICAL-TEAM"><input name="body" placeholder="Reply to Dr Lee…" required><button class="button">Send</button></form></section>
-          <section class="chat-panel team-chat-panel"><div class="chat-heading"><div><span class="eyebrow">PATIENT CONSULT</span><h2>Nurse Maya ↔ Mr Chen</h2></div><button class="button small secondary" data-summarize-conversation="C-PATIENT-STAFF">Create nurse AI summary</button></div><div id="staffPatientChat" class="message-list"></div><form class="chat-form" data-conversation-form="C-PATIENT-STAFF"><input name="body" placeholder="Message Mr Chen…" required><button class="button">Send</button></form></section>
+          <section class="chat-panel team-chat-panel"><div class="chat-heading"><div><span class="eyebrow">INTERNAL</span><h2>Dr Lee ↔ Nursing team</h2></div><button class="button secondary summarize-button" data-summarize-conversation="C-CLINICAL-TEAM">Summarize to timeline</button></div><div id="staffTeamChat" class="message-list"></div><form class="chat-form" data-conversation-form="C-CLINICAL-TEAM" autocomplete="off"><input name="body" aria-label="Message Dr Lee" autocomplete="off" required><button class="button">Send</button></form></section>
+          <section class="chat-panel team-chat-panel"><div class="chat-heading"><div><span class="eyebrow">PATIENT CONSULT</span><h2>Nursing team ↔ Patient</h2></div><button class="button secondary summarize-button" data-summarize-conversation="C-PATIENT-STAFF">Create nurse AI summary</button></div><div id="staffPatientChat" class="message-list"></div><form class="chat-form" data-conversation-form="C-PATIENT-STAFF" autocomplete="off"><input name="body" aria-label="Message patient" autocomplete="off" required><button class="button">Send</button></form></section>
         </section>
 
         <div id="careView">
           <section class="section-block">
             <div class="section-heading">
-              <div><span class="eyebrow">CONSULT GLANCE</span><h2>What needs attention now</h2></div>
+              <div><h2>What needs attention now</h2></div>
               <div class="header-actions"><span class="warm-path">● warm path · <strong id="loadTime">—</strong></span><button class="button secondary" id="addNoteButton">Add note</button><button class="button" id="closeConsultationButton">End consultation</button></div>
             </div>
+            <div id="consultationState" class="consultation-state hidden"></div>
             <div id="topCards" class="top-cards"></div>
           </section>
 
           <section class="section-block timeline-section">
             <div class="section-heading">
-              <div><span class="eyebrow">SOURCE OF TRUTH</span><h2>Longitudinal timeline</h2></div>
+              <div><h2>Longitudinal timeline</h2></div>
               <div class="filters"><button class="chip active">All</button><button class="chip">AI scribe</button><button class="chip">Clinical</button></div>
             </div>
             <div id="timeline" class="timeline"></div>
           </section>
 
-          <section class="section-block communication-section">
+          <section class="section-block communication-section" id="clinicianCommunication">
             <div class="section-heading"><div><span class="eyebrow">COMMUNICATION</span><h2>Care conversations</h2></div></div>
             <div class="communication-grid">
-              <section class="chat-panel" id="clinicianPatientPanel"><div class="chat-heading"><div><span class="eyebrow">PATIENT</span><h2>Dr Lee ↔ Mr Chen</h2></div><button class="button small secondary" data-summarize-conversation="C-PATIENT-CLINICIAN">Summarize to timeline</button></div><div id="clinicianPatientChat" class="message-list"></div><form class="chat-form" data-conversation-form="C-PATIENT-CLINICIAN"><input name="body" placeholder="Message Mr Chen…" required><button class="button">Send</button></form></section>
-              <section class="chat-panel"><div class="chat-heading"><div><span class="eyebrow">CLINICAL TEAM</span><h2>Dr Lee ↔ Maya</h2></div><button class="button small secondary" data-summarize-conversation="C-CLINICAL-TEAM">Summarize to timeline</button></div><div id="clinicianTeamChat" class="message-list"></div><form class="chat-form team-task-form" data-conversation-form="C-CLINICAL-TEAM"><input name="body" placeholder="Message Maya…" required><input name="taskTitle" placeholder="Optional: publish as task"><button class="button">Send</button></form></section>
+              <section class="chat-panel" id="clinicianPatientPanel"><div class="chat-heading"><div><span class="eyebrow">PATIENT</span><h2>Dr Lee ↔ Mr Chen</h2></div><button class="button secondary summarize-button" data-summarize-conversation="C-PATIENT-CLINICIAN">Summarize to timeline</button></div><div id="clinicianPatientChat" class="message-list"></div><form class="chat-form" data-conversation-form="C-PATIENT-CLINICIAN" autocomplete="off"><input name="body" aria-label="Message Mr Chen" autocomplete="off" required><button class="button">Send</button></form></section>
+              <section class="chat-panel"><div class="chat-heading"><div><span class="eyebrow">CLINICAL TEAM</span><h2>Dr Lee ↔ Nursing team</h2></div><button class="button secondary summarize-button" data-summarize-conversation="C-CLINICAL-TEAM">Summarize to timeline</button></div><div id="clinicianTeamChat" class="message-list"></div><form class="chat-form" data-conversation-form="C-CLINICAL-TEAM" autocomplete="off"><input name="body" aria-label="Message nursing team" autocomplete="off" required><button class="button">Send</button></form></section>
             </div>
           </section>
         </div>
@@ -118,6 +177,19 @@
       </div>
       <div id="drawerContent"></div>
     </aside>
+
+    <div class="feedback-backdrop hidden" id="feedbackBackdrop">
+      <section class="feedback-modal" role="dialog" aria-modal="true" aria-labelledby="feedbackTitle">
+        <span class="eyebrow">CONSULTATION COMPLETE</span>
+        <h2 id="feedbackTitle">How was your care experience?</h2>
+        <p>Your feedback helps the clinic improve. It does not change your clinical record.</p>
+        <form id="feedbackForm">
+          <fieldset><legend>Rating</legend><div class="rating-row"><label><input type="radio" name="rating" value="1" required><span>1</span></label><label><input type="radio" name="rating" value="2"><span>2</span></label><label><input type="radio" name="rating" value="3"><span>3</span></label><label><input type="radio" name="rating" value="4"><span>4</span></label><label><input type="radio" name="rating" value="5"><span>5</span></label></div></fieldset>
+          <label>Optional comment<textarea name="comment" placeholder="Tell us what worked well or could be improved…"></textarea></label>
+          <button class="button">Submit feedback</button>
+        </form>
+      </section>
+    </div>
 
     <script type="module" src="/app.js"></script>
   </body>

@@ -1,5 +1,5 @@
 const ROLE_PERMISSIONS = {
-  patient: new Set(["read:patient_facing", "create:patient_session", "read:conversation", "write:conversation"]),
+  patient: new Set(["read:patient_facing", "create:patient_session", "read:conversation", "write:conversation", "submit:consultation_feedback", "start:consultation", "transcribe:audio"]),
   staff: new Set([
     "read:clinical_team",
     "write:staff_note",
@@ -8,7 +8,8 @@ const ROLE_PERMISSIONS = {
     "update:task",
     "read:conversation",
     "write:conversation",
-    "summarize:conversation"
+    "summarize:conversation",
+    "transcribe:audio"
   ]),
   clinician: new Set([
     "read:clinical_team",
@@ -21,7 +22,9 @@ const ROLE_PERMISSIONS = {
     "read:conversation",
     "write:conversation",
     "summarize:conversation",
-    "close:consultation"
+    "start:consultation",
+    "close:consultation",
+    "transcribe:audio"
   ]),
   admin: new Set(["read:audit"])
 };
@@ -36,6 +39,15 @@ export function actorFromRequest(request) {
     throw error;
   }
   return { role, actorId, clinicId };
+}
+
+export function actorForAccount({ role, actorId, clinicId = "clinic-sg-01", patientId = null, displayName = "" }) {
+  if (!ROLE_PERMISSIONS[role]) {
+    const error = new Error("Unknown role");
+    error.status = 401;
+    throw error;
+  }
+  return { role, actorId, clinicId, patientId, displayName };
 }
 
 export function requirePermission(actor, permission) {
