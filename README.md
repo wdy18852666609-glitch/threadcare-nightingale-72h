@@ -1,10 +1,13 @@
 # ThreadCare demo
 
-ThreadCare is a synthetic-data longitudinal care-note prototype for the Nightingale 72-hour build. It combines patient, clinician, staff/nurse and AI-scribed interactions in one role-scoped timeline, with glanceable highlights, provenance, comments, tasks, revision history and adaptive importance scoring.
+ThreadCare is a publicly accessible, synthetic-data longitudinal care-note prototype for the Nightingale 72-hour build. It combines patient, clinician, staff/nurse and AI-scribed interactions in one role-scoped timeline, with glanceable highlights, provenance, comments, tasks, revision history and adaptive importance scoring.
+
+**Live application:** [threadcare-wang-yuyang.wang-yuyang.workers.dev](https://threadcare-wang-yuyang.wang-yuyang.workers.dev)
 
 ## Submission deliverables
 
-- Working application and automated tests: this repository
+- Working public application: [ThreadCare live demo](https://threadcare-wang-yuyang.wang-yuyang.workers.dev)
+- Source code and 39 automated tests: this repository
 - Technical brief: [`deliverables/ThreadCare_Technical_Brief_Wang_Yuyang.docx`](deliverables/ThreadCare_Technical_Brief_Wang_Yuyang.docx)
 - External libraries, models and tool disclosure: [`ATTRIBUTION.txt`](ATTRIBUTION.txt)
 - Demo video: recorded separately for submission
@@ -13,20 +16,18 @@ ThreadCare is a synthetic-data longitudinal care-note prototype for the Nighting
 
 The application feature set was frozen on 27 August 2026 for deliverable production. The frozen baseline includes the two-patient final demo seed, multi-role workflows, AI summarisation, provenance, revision control, RBAC, voice-to-text, adaptive importance learning and non-destructive data decay. After this point, application changes should be limited to reproducible demo-blocking defects, security problems or corrections required by the challenge brief.
 
-## Role login and multi-device demo
-
-Public demo: **[Open ThreadCare](https://threadcare-wang-yuyang.wang-yuyang.workers.dev)**
+## Role login and public multi-device demo
 
 The Cloudflare-hosted demo is available over HTTPS from any internet-connected device, uses shared managed storage for cross-device workflows, and is restricted to synthetic information. The role credentials below also apply to the public demo.
 
-The prototype now uses server-verified sessions rather than the old role switcher. Default local demo passwords are:
+The prototype uses server-verified sessions rather than a browser-only role switcher. The intentionally shared synthetic-demo accounts are:
 
 - Clinician: `dr.lee` / `clinician123`
 - Staff: `maya` / `staff123`, or `noah` / `staff456`
 - Admin: `clinic.ops` / `admin123`
 - Patient: completes the synthetic registration form. Entering Mr / Chen / 68 continues the seeded Mr Chen record; other returning patients can supply their Patient ID.
 
-Set `CLINICIAN_PASSWORD`, `STAFF_PASSWORD`, `STAFF_NOAH_PASSWORD`, and `ADMIN_PASSWORD` in `.env.local` before sharing. `npm start` enables durable local demo state in `data/demo-state.json`; session cookies remain browser-specific and expire after 12 hours. Multiple staff sessions share the clinic queue while preserving the individual actor on messages, notes, tasks and audit events.
+On the public deployment, session cookies remain browser-specific while the clinic record is shared through Cloudflare D1. Multiple devices and staff sessions therefore see the same patient, conversation, task, result and timeline state while preserving the individual actor on messages, notes, tasks and audit events.
 
 The local server remains useful for development and offline rehearsal. It is separate from the hosted public demo and should never contain real patient information.
 
@@ -37,16 +38,22 @@ The committed seed is intentionally demo-ready rather than empty or filled with 
 - **Mr Chen (P-1001)** has a confirmed penicillin allergy, one concise prior clinician outcome and one older resolved AI entry collapsed into Compressed History. He has no current highlight, task, result, prescription or learned weight, so the main demo can begin with a fresh patient pre-consult.
 - **Ms Taylor (P-1002)** is a clean new synthetic patient with no clinical history. She demonstrates empty states and that the workflow is not hard-coded to Mr Chen.
 
-In demo mode, Admin can use **Restore demo** to return to this exact state after testing or a recording attempt. The action clears current synthetic activity and requires an explicit confirmation in the UI.
+In demo mode, Admin can use **Restore demo** to return the shared public clinic to this exact state after testing or a recording attempt. The action clears current synthetic activity and requires an explicit confirmation in the UI.
+
+## Public deployment
+
+The live application runs on Cloudflare Workers with static assets served at the edge and shared synthetic clinic state persisted in Cloudflare D1. The Gemini API key is stored as a Worker secret and is never sent to the browser or committed to Git. HTTPS enables microphone access for the reviewed voice-to-text workflow.
+
+The public demo is a deployment of the same role-scoped workflow documented and tested in this repository. Its D1 implementation stores the clinic state as one persisted prototype snapshot; this is sufficient for the cross-device demo but is not presented as a production clinical database. See [`PUBLIC_DEPLOYMENT.md`](PUBLIC_DEPLOYMENT.md) for the deployed architecture, verification evidence and scope boundary.
 
 ## Run locally (optional)
 
-1. Copy `.env.example` to `.env.local`.
+1. Copy `.env.example` to `.env.local` for local development only.
 2. Add a Google Agent Platform / Vertex Express API key as `GOOGLE_API_KEY` (preferred), or configure the optional OpenAI fallback.
 3. Start the demo with `npm start`.
 4. Open `http://localhost:3000`.
 
-The in-app setup page can also validate and persist a Google key into the ignored `.env.local` file. The browser never receives the key.
+The local setup page can also validate and persist a Google key into the ignored `.env.local` file. It is not used to configure the public deployment; public secrets are managed by Cloudflare.
 
 ## AI and provenance
 
@@ -73,17 +80,17 @@ The prototype applies a computed hot/warm/cold storage policy to timeline entrie
 - Manual clinical/staff context becomes warm after 180 days and cold after 730 days when no protection rule applies.
 - Cold entries are compressed into an archive card in the default Timeline view. They are not deleted: exact entries, source pointers, versions and audit metadata remain retrievable.
 
-For this prototype the tiers are logical views over local JSON storage. In production, the same policy metadata would route encrypted records to hot database tables, warm object storage and cold archival storage while preserving stable provenance identifiers.
+For the public prototype, the tiers are logical views over the clinic state persisted in Cloudflare D1; local development uses an ignored JSON state file. In production, the same policy metadata would route encrypted records to normalized hot database tables, warm object storage and cold archival storage while preserving stable provenance identifiers.
 
 Consultations are repeatable and independently identified. Closing one consultation preserves its entries, sources, outcome and prescriptions in the patient-level longitudinal timeline. A later patient pre-consult or clinician action starts a new consultation with fresh conversation threads and AI summaries, including when both consultations occur on the same day.
 
 ## Voice input
 
-Patient pre-consult, care-team chat and clinical/staff drawer text areas include a 30-second Voice button. The browser records mono WAV audio, Gemini returns a speech transcript, and the user must review the text before sending it. Raw audio is not retained. When the text is submitted, the existing redaction pipeline removes configured names, phone numbers and ID patterns before downstream AI summarisation. Live microphone capture requires HTTPS or `http://localhost:3000`; browsers block microphone permission on the plain-HTTP LAN address.
+Patient pre-consult, care-team chat and clinical/staff drawer text areas include a 30-second Voice button. The browser records mono WAV audio, Gemini returns a speech transcript, and the user must review the text before sending it. Raw audio is not retained. When the text is submitted, the existing redaction pipeline removes configured names, phone numbers and ID patterns before downstream AI summarisation. The public HTTPS deployment supports microphone permission; local development also supports it on `http://localhost:3000`.
 
 ## Privacy and RBAC
 
-Before any patient text is sent to the LLM, the server redacts configured names, phone numbers and supported ID patterns in `src/redaction.js`. Real keys remain in `.env.local`, which is excluded from Git.
+Before any patient text is sent to the LLM, the server redacts configured names, phone numbers and supported ID patterns in `src/redaction.js`. The public API key is stored as a Cloudflare Worker secret; local-development keys remain in `.env.local`. Neither location exposes a key to the browser or Git.
 
 Permissions are enforced in server middleware and store operations, not only in the UI:
 
@@ -94,7 +101,7 @@ Permissions are enforced in server middleware and store operations, not only in 
 - Only clinicians can pin or reject AI highlight suggestions.
 - Audit records contain action metadata rather than note content.
 
-The public demo terminates TLS at the hosting layer and uses managed shared storage. It remains a challenge prototype—not a production clinical system—and must only use synthetic data.
+The public demo terminates TLS at Cloudflare's edge and uses managed shared D1 storage. It remains a challenge prototype—not a production clinical system—and must only use synthetic data.
 
 ## Tests
 
@@ -116,11 +123,11 @@ npm run benchmark:p95
 
 The benchmark performs 20 warm-up iterations followed by 200 measured iterations. Each iteration sequentially loads the patient care-note data and visible conversations, matching the two API requests used by the consult glance view.
 
-Recorded on 26 August 2026 against the local synthetic in-memory server:
+Recorded on 26 August 2026 against the local synthetic server before public deployment:
 
 - Median: **31.51 ms**
 - P95: **32.20 ms**
 - P99: **32.44 ms**
 - Requirement: **P95 <= 300 ms** - passed
 
-This is a localhost prototype approximation, not a claim about production network latency. The script prints a timestamped JSON result so the measurement can be rerun and cited in the technical brief.
+This is a reproducible warm-path application benchmark, not a claim about public internet or multi-region latency. The Cloudflare deployment was separately smoke-tested for HTTPS access, external-LLM configuration, clinician authentication and shared patient retrieval. The script prints a timestamped JSON result so the local measurement can be rerun and cited in the technical brief.

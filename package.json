@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "A trust-first longitudinal care note prototype for the Nightingale 72-hour build.",
+  "description": "A publicly hosted, trust-first longitudinal care note prototype for the Nightingale 72-hour build.",
   "scripts": {
     "start": "node server.js --demo --persist",
     "test": "python -m unittest discover -s tests -p \"test_*.py\" -v",

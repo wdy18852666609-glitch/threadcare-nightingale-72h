@@ -6,7 +6,8 @@ Last updated: 27 August 2026
 RUNTIME SOFTWARE
 
 1. Node.js
-   Use: Application server and command-line runtime.
+   Use: Local development server, test orchestration, build tooling, and
+   command-line runtime. The public application runs on Cloudflare Workers.
    Version requirement: Node.js 20 or later.
    License: MIT License (the Node.js distribution also contains separately
    licensed third-party components listed by the Node.js project).
@@ -18,9 +19,34 @@ RUNTIME SOFTWARE
    License: Python Software Foundation License Version 2.
    Source and license: https://docs.python.org/3/license.html
 
+PUBLIC HOSTING AND DEPLOYMENT
+
+3. Cloudflare Workers and D1
+   Runtime use: Public HTTPS hosting, edge execution, static-asset delivery,
+   server-side secrets, and shared synthetic clinic-state persistence.
+   Provider: Cloudflare, Inc.
+   Service terms: Proprietary hosted service used under the applicable
+   Cloudflare terms; it is not redistributed with this repository.
+   Terms: https://www.cloudflare.com/terms/
+
+4. Public deployment toolchain
+   Packages used to build the Cloudflare runtime: Next.js 16.2.6, React and
+   React DOM 19.2.6, Vite 8.0.13, Vinext 1.0.0-beta.3, Wrangler 4.92.0,
+   @cloudflare/vite-plugin 1.37.1, @openai/sites-vite-plugin 0.2.0, and
+   Drizzle ORM 0.45.2.
+   Licenses: MIT, MIT OR Apache-2.0, or Apache-2.0 as declared by the
+   respective installed packages.
+   Sources: https://github.com/vercel/next.js
+            https://github.com/facebook/react
+            https://github.com/vitejs/vite
+            https://github.com/cloudflare/vinext
+            https://github.com/cloudflare/workers-sdk
+            https://github.com/openai/sites
+            https://github.com/drizzle-team/drizzle-orm
+
 HOSTED AI SERVICES
 
-3. Google Gemini / Vertex AI API
+5. Google Gemini / Vertex AI API
    Runtime use: Structured patient-message extraction, conversation
    summarisation, follow-up responses, and speech-to-text transcription.
    Default configured model: gemini-2.5-flash.
@@ -30,7 +56,7 @@ HOSTED AI SERVICES
    with this repository.
    Terms: https://developers.google.com/terms
 
-4. OpenAI Responses API (optional fallback)
+6. OpenAI Responses API (optional fallback)
    Runtime use: Optional compatible fallback for structured extraction,
    summaries, and follow-up responses when explicitly configured.
    Default fallback model in the example configuration: gpt-5.4-mini.
@@ -41,7 +67,7 @@ HOSTED AI SERVICES
 
 DEVELOPMENT ASSISTANCE
 
-5. OpenAI ChatGPT / Codex
+7. OpenAI ChatGPT / Codex
    Use: AI-assisted product reasoning, implementation, debugging, testing,
    documentation support, and iterative design during the 72-hour challenge.
    Runtime dependency: None. ChatGPT/Codex is not bundled with the application.
