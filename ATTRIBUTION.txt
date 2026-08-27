@@ -1,0 +1,64 @@
+ThreadCare - Third-Party Attribution
+Prepared for the Nightingale 72-Hour Build
+Author: Wang Yuyang
+Last updated: 27 August 2026
+
+RUNTIME SOFTWARE
+
+1. Node.js
+   Use: Application server and command-line runtime.
+   Version requirement: Node.js 20 or later.
+   License: MIT License (the Node.js distribution also contains separately
+   licensed third-party components listed by the Node.js project).
+   Source and license: https://github.com/nodejs/node
+
+2. Python standard library
+   Use: Automated test runner and local test infrastructure. No third-party
+   Python packages are required to run the application test suite.
+   License: Python Software Foundation License Version 2.
+   Source and license: https://docs.python.org/3/license.html
+
+HOSTED AI SERVICES
+
+3. Google Gemini / Vertex AI API
+   Runtime use: Structured patient-message extraction, conversation
+   summarisation, follow-up responses, and speech-to-text transcription.
+   Default configured model: gemini-2.5-flash.
+   Provider: Google LLC.
+   License/terms: Proprietary hosted service, used under the applicable Google
+   APIs Terms of Service and Google Cloud service terms; it is not redistributed
+   with this repository.
+   Terms: https://developers.google.com/terms
+
+4. OpenAI Responses API (optional fallback)
+   Runtime use: Optional compatible fallback for structured extraction,
+   summaries, and follow-up responses when explicitly configured.
+   Default fallback model in the example configuration: gpt-5.4-mini.
+   Provider: OpenAI, L.L.C.
+   License/terms: Proprietary hosted service, used under the applicable OpenAI
+   Services Agreement; it is not redistributed with this repository.
+   Terms: https://openai.com/policies/services-agreement/
+
+DEVELOPMENT ASSISTANCE
+
+5. OpenAI ChatGPT / Codex
+   Use: AI-assisted product reasoning, implementation, debugging, testing,
+   documentation support, and iterative design during the 72-hour challenge.
+   Runtime dependency: None. ChatGPT/Codex is not bundled with the application.
+   Terms: https://openai.com/policies/terms-of-use/
+
+BROWSER AND UI ASSETS
+
+The application uses standard browser capabilities, including Fetch, Web Audio,
+Canvas-related binary processing, and MediaDevices/getUserMedia. These are Web
+Platform APIs and are not bundled third-party libraries.
+
+The interface uses system fonts, Unicode symbols, and original HTML, CSS, and
+JavaScript. No external font package, icon library, CSS framework, UI component
+library, analytics SDK, or copied clinical dataset is included.
+
+DATA NOTICE
+
+All seeded patients, conversations, conditions, tasks, results, and identifiers
+are synthetic demonstration data. No real patient data is included or authorised
+for use in this prototype.
