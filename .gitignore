@@ -1,4 +1,6 @@
 node_modules/
+.pnpm-store/
+deploy-site/
 *.log
 __pycache__/
 tmp/

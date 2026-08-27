@@ -15,6 +15,10 @@ The application feature set was frozen on 27 August 2026 for deliverable product
 
 ## Role login and multi-device demo
 
+Public demo: **[Open ThreadCare](https://threadcare-wang-yuyang.wdy18852666609.chatgpt.site)**
+
+The hosted demo is available over HTTPS from any internet-connected device, uses shared managed storage for cross-device workflows, and is restricted to synthetic information. The role credentials below also apply to the public demo.
+
 The prototype now uses server-verified sessions rather than the old role switcher. Default local demo passwords are:
 
 - Clinician: `dr.lee` / `clinician123`
@@ -24,7 +28,7 @@ The prototype now uses server-verified sessions rather than the old role switche
 
 Set `CLINICIAN_PASSWORD`, `STAFF_PASSWORD`, `STAFF_NOAH_PASSWORD`, and `ADMIN_PASSWORD` in `.env.local` before sharing. `npm start` enables durable local demo state in `data/demo-state.json`; session cookies remain browser-specific and expire after 12 hours. Multiple staff sessions share the clinic queue while preserving the individual actor on messages, notes, tasks and audit events.
 
-For several computers on the same Wi-Fi, keep this computer and the server running, find this computer's IPv4 address, then open `http://YOUR-IP:3000` on each device. Windows Firewall may ask you to allow private-network access. This is a synthetic-data prototype using HTTP; do not expose it to the public internet or use real patient information.
+The local server remains useful for development and offline rehearsal. It is separate from the hosted public demo and should never contain real patient information.
 
 ### Final demo starting state
 
@@ -35,7 +39,7 @@ The committed seed is intentionally demo-ready rather than empty or filled with 
 
 In demo mode, Admin can use **Restore demo** to return to this exact state after testing or a recording attempt. The action clears current synthetic activity and requires an explicit confirmation in the UI.
 
-## Run locally
+## Run locally (optional)
 
 1. Copy `.env.example` to `.env.local`.
 2. Add a Google Agent Platform / Vertex Express API key as `GOOGLE_API_KEY` (preferred), or configure the optional OpenAI fallback.
@@ -90,7 +94,7 @@ Permissions are enforced in server middleware and store operations, not only in 
 - Only clinicians can pin or reject AI highlight suggestions.
 - Audit records contain action metadata rather than note content.
 
-This localhost prototype uses synthetic in-memory data. A production deployment would terminate TLS at the hosting layer and use encrypted managed storage; those deployment controls are outside this demo runtime.
+The public demo terminates TLS at the hosting layer and uses managed shared storage. It remains a challenge prototype—not a production clinical system—and must only use synthetic data.
 
 ## Tests
 
