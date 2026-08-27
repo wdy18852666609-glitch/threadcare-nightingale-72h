@@ -15,9 +15,9 @@ The application feature set was frozen on 27 August 2026 for deliverable product
 
 ## Role login and multi-device demo
 
-Public demo: **[Open ThreadCare](https://threadcare-wang-yuyang.wdy18852666609.chatgpt.site)**
+Public demo: **[Open ThreadCare](https://threadcare-wang-yuyang.wang-yuyang.workers.dev)**
 
-The hosted demo is available over HTTPS from any internet-connected device, uses shared managed storage for cross-device workflows, and is restricted to synthetic information. The role credentials below also apply to the public demo.
+The Cloudflare-hosted demo is available over HTTPS from any internet-connected device, uses shared managed storage for cross-device workflows, and is restricted to synthetic information. The role credentials below also apply to the public demo.
 
 The prototype now uses server-verified sessions rather than the old role switcher. Default local demo passwords are:
 
