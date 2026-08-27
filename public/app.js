@@ -302,7 +302,10 @@ async function renderPatientPortal() {
   setHeader(closed ? `Consultation ${sequence} complete` : `Consultation ${sequence} pre-consult`, closed ? "Your previous result remains below. Start a new pre-consult whenever you need care again." : "Share symptoms and questions before your visit", `Patient portal / ${view.patient.displayName.replace(" (synthetic)", "")}`);
   document.querySelector("#patientConsultTitle").textContent = closed ? "Start your next consultation" : `Consultation ${sequence} · AI-assisted pre-consult`;
   document.querySelector("#patientConsultDescription").textContent = closed ? "Describe a new concern below. Submitting it will open a new consultation without deleting your history." : "Describe what you are feeling. AI will organise the report and ask a follow-up question; it does not diagnose you.";
-  document.querySelector(".patient-communications").classList.toggle("hidden", !active);
+  document.querySelector(".patient-communications").classList.remove("hidden");
+  document.querySelector("#patientAiPanel").classList.remove("hidden");
+  document.querySelector("#patientClinicianPanel").classList.toggle("hidden", !active);
+  document.querySelector("#patientStaffPanel").classList.toggle("hidden", !active);
   bindConversation("patientAiChat", conversations.find((item) => item.kind === "patient_ai"));
   bindConversation("patientClinicianChat", conversations.find((item) => item.kind === "patient_clinician"));
   bindConversation("patientStaffChat", conversations.find((item) => item.kind === "nurse_patient"));

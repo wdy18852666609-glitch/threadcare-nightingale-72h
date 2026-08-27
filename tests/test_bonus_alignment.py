@@ -1,4 +1,5 @@
 from api_test_case import ApiTestCase
+from pathlib import Path
 
 
 class TestBonusAlignment(ApiTestCase):
@@ -19,6 +20,14 @@ class TestBonusAlignment(ApiTestCase):
         self.assertEqual(ms_taylor["entries"], [])
         self.assertEqual(ms_taylor["highlights"], [])
         self.assertEqual(ms_taylor["tasks"], [])
+
+        project_root = Path(__file__).resolve().parents[1]
+        patient_html = (project_root / "public" / "index.html").read_text(encoding="utf-8")
+        patient_js = (project_root / "public" / "app.js").read_text(encoding="utf-8")
+        self.assertIn('id="patientAiPanel"', patient_html)
+        self.assertIn('querySelector("#patientAiPanel").classList.remove("hidden")', patient_js)
+        self.assertIn('querySelector("#patientClinicianPanel").classList.toggle("hidden", !active)', patient_js)
+        self.assertIn('querySelector("#patientStaffPanel").classList.toggle("hidden", !active)', patient_js)
 
     def test_admin_can_restore_demo_seed_but_clinician_cannot(self):
         self.request(
