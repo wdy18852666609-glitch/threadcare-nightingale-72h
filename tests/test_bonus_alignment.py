@@ -26,6 +26,8 @@ class TestBonusAlignment(ApiTestCase):
         patient_js = (project_root / "public" / "app.js").read_text(encoding="utf-8")
         self.assertIn('id="patientAiPanel"', patient_html)
         self.assertIn('querySelector("#patientAiPanel").classList.remove("hidden")', patient_js)
+        self.assertIn("function mergeConversationMessages", patient_js)
+        self.assertIn("renderPatientPortal(result.conversationMessages || [])", patient_js)
         self.assertIn('querySelector("#patientClinicianPanel").classList.toggle("hidden", !active)', patient_js)
         self.assertIn('querySelector("#patientStaffPanel").classList.toggle("hidden", !active)', patient_js)
 

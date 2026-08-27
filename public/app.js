@@ -291,7 +291,21 @@ async function renderCareNote() {
   document.querySelector("#loadTime").textContent = `${Math.max(1, Math.round(performance.now() - startedAt))}ms observed`;
 }
 
-async function renderPatientPortal() {
+function mergeConversationMessages(conversation, freshMessages = []) {
+  if (!freshMessages.length) return conversation;
+  const messages = [...(conversation?.messages || [])];
+  const seen = new Set(messages.map((message) => message.id));
+  for (const message of freshMessages) {
+    if (!seen.has(message.id)) {
+      messages.push(message);
+      seen.add(message.id);
+    }
+  }
+  messages.sort((left, right) => String(left.createdAt).localeCompare(String(right.createdAt)));
+  return { ...(conversation || {}), id: conversation?.id || freshMessages[0]?.conversationId, kind: "patient_ai", messages };
+}
+
+async function renderPatientPortal(freshAiMessages = []) {
   hideAllViews();
   patientPortal.classList.remove("hidden");
   view = await api(`/api/patients/${currentPatientId}`);
@@ -306,7 +320,8 @@ async function renderPatientPortal() {
   document.querySelector("#patientAiPanel").classList.remove("hidden");
   document.querySelector("#patientClinicianPanel").classList.toggle("hidden", !active);
   document.querySelector("#patientStaffPanel").classList.toggle("hidden", !active);
-  bindConversation("patientAiChat", conversations.find((item) => item.kind === "patient_ai"));
+  const patientAiConversation = mergeConversationMessages(conversations.find((item) => item.kind === "patient_ai"), freshAiMessages);
+  bindConversation("patientAiChat", patientAiConversation);
   bindConversation("patientClinicianChat", conversations.find((item) => item.kind === "patient_clinician"));
   bindConversation("patientStaffChat", conversations.find((item) => item.kind === "nurse_patient"));
   renderPatientTreatment();
@@ -716,7 +731,7 @@ document.addEventListener("submit", async (event) => {
       const result = await api("/api/patient-sessions", { method: "POST", body: JSON.stringify({ patientId: currentPatientId, message: data.get("message"), knownNames: [view.patient.displayName.replace(" (synthetic)", "")] }) });
       showNotice(result.acknowledgement);
       event.target.reset();
-      return renderPatientPortal();
+      return renderPatientPortal(result.conversationMessages || []);
     }
     if (conversationId) {
       await api(`/api/conversations/${conversationId}/messages`, { method: "POST", body: JSON.stringify({ body: data.get("body"), knownNames: [view.patient.displayName.replace(" (synthetic)", "")] }) });
