@@ -8,9 +8,10 @@ ThreadCare is a publicly accessible, synthetic-data longitudinal care-note proto
 
 - Working public application: [ThreadCare live demo](https://threadcare-wang-yuyang.wang-yuyang.workers.dev)
 - Source code and 39 automated tests: this repository
-- Technical brief: [`deliverables/ThreadCare_Technical_Brief_Wang_Yuyang.docx`](deliverables/ThreadCare_Technical_Brief_Wang_Yuyang.docx)
+- Submission index: [`deliverables/README.md`](deliverables/README.md)
+- Technical brief: [`deliverables/ThreadCare_Technical_Brief_Wang_Yuyang.pdf`](deliverables/ThreadCare_Technical_Brief_Wang_Yuyang.pdf) (editable [`DOCX`](deliverables/ThreadCare_Technical_Brief_Wang_Yuyang.docx))
 - External libraries, models and tool disclosure: [`ATTRIBUTION.txt`](ATTRIBUTION.txt)
-- Demo video: recorded separately for submission
+- Demo video: [`deliverables/DEMO_VIDEO.md`](deliverables/DEMO_VIDEO.md)
 
 ## Product freeze
 
