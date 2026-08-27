@@ -46,6 +46,19 @@ class TestBonusAlignment(ApiTestCase):
         self.assertEqual(result["profile"], "final-demo-start")
         self.assertEqual(result["patientCount"], 2)
         self.assertEqual(result["entryCount"], 3)
+        status, intake = self.request(
+            "POST",
+            "/api/patient-sessions",
+            role="patient",
+            body={"patientId": "P-1001", "message": "I feel dizzy after the demo reset."},
+        )
+        self.assertEqual(status, 201)
+        self.assertEqual([message["authorRole"] for message in intake["conversationMessages"]], ["patient", "system"])
+
+        project_root = Path(__file__).resolve().parents[1]
+        serverless_source = (project_root / "deploy-site" / "lib" / "serverless-api.js").read_text(encoding="utf-8")
+        self.assertIn("let requestQueue = Promise.resolve()", serverless_source)
+        self.assertIn("const activeSessions = structuredClone(sessions())", serverless_source)
 
     def register_second_patient(self):
         status, payload = self.request(

@@ -158,6 +158,18 @@ function consultationConversations(patientId, clinicId, consultationId) {
   ];
 }
 
+function ensureConsultationConversations(patientId, clinicId, consultationId) {
+  const templates = consultationConversations(patientId, clinicId, consultationId);
+  for (const template of templates) {
+    const exists = state.conversations.some((conversation) =>
+      conversation.patientId === patientId &&
+      conversation.consultationId === consultationId &&
+      conversation.kind === template.kind
+    );
+    if (!exists) state.conversations.push(template);
+  }
+}
+
 function latestConsultation(patientId) {
   return state.consultations.filter((item) => item.patientId === patientId).at(-1) || null;
 }
@@ -328,6 +340,11 @@ export function replaceState(savedState) {
     throw new Error("Saved care state is invalid");
   }
   state = structuredClone(savedState);
+  state.conversations ||= [];
+  for (const consultation of state.consultations) {
+    const patient = state.patients.find((item) => item.id === consultation.patientId);
+    ensureConsultationConversations(consultation.patientId, patient?.clinicId || "clinic-sg-01", consultation.id);
+  }
   state.importanceModels ||= {};
   for (const clinicId of new Set(state.patients.map((patient) => patient.clinicId))) {
     importanceModel(clinicId);
@@ -449,7 +466,7 @@ export function startConsultation(patientId, actor, trigger = "manual") {
   };
   state.consultations.push(consultation);
   const patient = state.patients.find((item) => item.id === patientId);
-  state.conversations.push(...consultationConversations(patientId, patient?.clinicId || actor.clinicId, consultation.id));
+  ensureConsultationConversations(patientId, patient?.clinicId || actor.clinicId, consultation.id);
   addAudit(actor, "consultation.started", "consultation", consultation.id, { patientId, sequence, trigger });
   return consultation;
 }
@@ -513,6 +530,7 @@ export async function createPatientSession(input, redactedMessage, actor) {
   }
   const occurredAt = nowIso();
   const analysis = await analyzePatientMessage(redactedMessage, input.message);
+  ensureConsultationConversations(input.patientId, actor.clinicId, consultation.id);
   const intakeConversation = state.conversations.find((item) => item.kind === "patient_ai" && item.patientId === input.patientId && item.consultationId === consultation.id);
   const patientMessage = addMessageRecord(intakeConversation, input.message, redactedMessage, actor, {
     sourceStartChar: analysis.source.startChar,

@@ -620,12 +620,18 @@ async function serveStatic(request, response, url) {
   }
 }
 
+let apiRequestQueue = Promise.resolve();
+
 const server = http.createServer(async (request, response) => {
   const url = new URL(request.url, `http://${request.headers.host || "localhost"}`);
   try {
     if (url.pathname.startsWith("/api/")) {
-      await handleApi(request, response, url);
-      if (!["GET", "HEAD", "OPTIONS"].includes(request.method) && response.statusCode < 400) await persistState();
+      const result = apiRequestQueue.then(async () => {
+        await handleApi(request, response, url);
+        if (!["GET", "HEAD", "OPTIONS"].includes(request.method) && response.statusCode < 400) await persistState();
+      });
+      apiRequestQueue = result.then(() => undefined, () => undefined);
+      await result;
     }
     else await serveStatic(request, response, url);
   } catch (error) {
