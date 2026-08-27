@@ -2,6 +2,13 @@
 
 ThreadCare is a synthetic-data longitudinal care-note prototype for the Nightingale 72-hour build. It combines patient, clinician, staff/nurse and AI-scribed interactions in one role-scoped timeline, with glanceable highlights, provenance, comments, tasks, revision history and adaptive importance scoring.
 
+## Submission deliverables
+
+- Working application and automated tests: this repository
+- Technical brief: [`deliverables/ThreadCare_Technical_Brief_Wang_Yuyang.docx`](deliverables/ThreadCare_Technical_Brief_Wang_Yuyang.docx)
+- External libraries, models and tool disclosure: [`ATTRIBUTION.txt`](ATTRIBUTION.txt)
+- Demo video: recorded separately for submission
+
 ## Product freeze
 
 The application feature set was frozen on 27 August 2026 for deliverable production. The frozen baseline includes the two-patient final demo seed, multi-role workflows, AI summarisation, provenance, revision control, RBAC, voice-to-text, adaptive importance learning and non-destructive data decay. After this point, application changes should be limited to reproducible demo-blocking defects, security problems or corrections required by the challenge brief.
